@@ -1,62 +1,68 @@
 #!/bin/bash
 
-set -e
+# 参数
+PROTOCOL=$1           # shadowsocks、vmess、trojan等
+REMOTE=$2             # 远程地址及端口，如 103.180.28.134:16589
+LISTEN_PORT=$3        # 本地监听端口，如 16589
+ENABLE_TLS=$4         # true/false
 
-PROTOCOL=${1:-vmess}
-REMOTE=${2:-"1.2.3.4:10000"}
-LISTEN_PORT=${3:-443}
-ENABLE_TLS=${4:-false}
+if [[ -z "$PROTOCOL" || -z "$REMOTE" || -z "$LISTEN_PORT" || -z "$ENABLE_TLS" ]]; then
+  echo "Usage: bash install.sh <protocol> <remote_ip:port> <listen_port> <tls_enabled:true|false>"
+  exit 1
+fi
 
 echo "👉 开始安装 Realm..."
 
-cd /tmp
-REPO_URL="https://github.com/zhboner/realm/releases/latest/download"
-BIN_NAME="realm-x86_64-unknown-linux-gnu.tar.gz"
-
-wget -q "${REPO_URL}/${BIN_NAME}" -O realm.tar.gz
-tar -xzf realm.tar.gz
-chmod +x realm
-mv realm /usr/local/bin/
+# 下载 Realm 二进制 (示例用静态链接，实际请替换为最新版本下载地址)
+REALM_BIN_URL="https://github.com/MetaCubeX/realm/releases/latest/download/realm-linux-amd64"
+mkdir -p /usr/local/bin
+curl -L $REALM_BIN_URL -o /usr/local/bin/realm
+chmod +x /usr/local/bin/realm
 
 echo "✅ Realm 安装完成"
 
-echo "📁 生成配置文件..."
-
+# 生成配置文件
 mkdir -p /etc/realm
-cat > /etc/realm/config.json <<EOF
-{
-  "log_level": "info",
-  "listen": "0.0.0.0:${LISTEN_PORT}",
-  "remote": "${REMOTE}",
-  "tls": {
-    "enabled": ${ENABLE_TLS},
-    "insecure": true
-  },
-  "transport": "tcp",
-  "protocol": "${PROTOCOL}"
-}
+
+cat > /etc/realm/config.toml <<EOF
+[network]
+no_tcp = false
+use_udp = true
+
+[[endpoints]]
+listen = "0.0.0.0:${LISTEN_PORT}"
+remote = "${REMOTE}"
+protocol = "${PROTOCOL}"
+
+[security.tls]
+enabled = ${ENABLE_TLS}
+insecure = true
 EOF
 
-echo "✅ 配置文件生成成功：/etc/realm/config.json"
+echo "📁 配置文件生成成功：/etc/realm/config.toml"
 
-echo "🔧 设置 systemd 服务..."
-
+# 写 systemd 服务
 cat > /etc/systemd/system/realm.service <<EOF
 [Unit]
 Description=Realm Proxy Service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/realm -c /etc/realm/config.json
+Type=simple
+ExecStart=/usr/local/bin/realm -c /etc/realm/config.toml
 Restart=on-failure
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reexec
+echo "🔧 设置 systemd 服务..."
+
 systemctl daemon-reload
-systemctl enable --now realm
+systemctl enable realm
+systemctl restart realm
 
 echo "✅ Realm 服务已启动并设置开机自启"
+
 systemctl status realm --no-pager
