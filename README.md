@@ -1,19 +1,44 @@
 # Realm 一键安装脚本
 
-支持协议：vmess / vless / trojan / shadowsocks / socks5 / http
-
 ## 使用说明
 
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/qwer8856/Realm-Oneclick/main/install.sh) [协议] [目标IP:端口] [本地监听端口] [TLS true/false]
+请在 Linux 服务器上运行此脚本安装 Realm。
+
+### 参数说明（必须填写）
+
 ```
+./install_realm.sh <protocol> <remote_addr> <remote_port> <tls_enabled>
+```
+
+- `protocol` ：协议名称（如 shadowsocks、vmess 等）
+- `remote_addr` ：远程服务器 IP 或域名
+- `remote_port` ：远程服务器端口
+- `tls_enabled` ：是否启用 TLS，填写 `true` 或 `false`
 
 ### 示例
 
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/qwer8856/Realm-Oneclick/main/install.sh) vmess 1.2.3.4:10000 443 false
+./install_realm.sh shadowsocks 103.180.28.134 16589 false
 ```
 
-- 默认协议：vmess
-- 默认监听端口：443
-- 默认 TLS：false
+---
+
+脚本会：
+
+- 下载 Realm 二进制
+- 生成配置文件 `/etc/realm/config.toml`
+- 创建 systemd 服务 `realm.service` 并启动
+- 设置开机自启
+
+---
+
+## 卸载 Realm
+
+```bash
+systemctl stop realm
+systemctl disable realm
+rm -rf /etc/realm
+rm -f /usr/local/bin/realm
+rm -f /etc/systemd/system/realm.service
+systemctl daemon-reload
+```
