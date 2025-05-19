@@ -54,6 +54,17 @@ Restart=on-failure
 WantedBy=multi-user.target
 EOF
 
+# 自动开放防火墙端口
+echo "🔓 正在开放防火墙端口 $REMOTE_PORT（TCP/UDP）..."
+iptables -I INPUT -p tcp --dport $REMOTE_PORT -j ACCEPT
+iptables -I INPUT -p udp --dport $REMOTE_PORT -j ACCEPT
+
+if command -v netfilter-persistent &>/dev/null; then
+    netfilter-persistent save
+else
+    echo "⚠️ 建议执行：apt install iptables-persistent -y"
+fi
+
 systemctl daemon-reload
 systemctl enable realm
 systemctl restart realm
