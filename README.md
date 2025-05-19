@@ -1,19 +1,17 @@
-# Realm 一键安装脚本
+# Realm 一键安装脚本（自动开放端口版）
 
-## 使用说明
+## 使用方式
 
-请在 Linux 服务器上运行此脚本安装 Realm。
-
-### 参数说明（必须填写）
-
-```
+```bash
 ./install_realm.sh <protocol> <remote_addr> <remote_port> <tls_enabled>
 ```
 
-- `protocol` ：协议名称（如 shadowsocks、vmess 等）
-- `remote_addr` ：远程服务器 IP 或域名
-- `remote_port` ：远程服务器端口
-- `tls_enabled` ：是否启用 TLS，填写 `true` 或 `false`
+### 参数说明
+
+- `protocol`：协议名称（shadowsocks、vmess、vless、trojan 等）
+- `remote_addr`：远程服务器 IP 或域名
+- `remote_port`：远程端口号
+- `tls_enabled`：true / false（是否启用 TLS）
 
 ### 示例
 
@@ -23,12 +21,12 @@
 
 ---
 
-脚本会：
+## 特性
 
-- 下载 Realm 二进制
-- 生成配置文件 `/etc/realm/config.toml`
-- 创建 systemd 服务 `realm.service` 并启动
-- 设置开机自启
+- 自动下载最新 Realm
+- 自动生成配置文件 `/etc/realm/config.toml`
+- 自动创建并启动 systemd 服务
+- ✅ 自动开放监听端口（使用 iptables）
 
 ---
 
